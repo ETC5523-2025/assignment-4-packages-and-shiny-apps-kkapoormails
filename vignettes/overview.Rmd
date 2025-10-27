@@ -1,0 +1,92 @@
+---
+title: "Exploring Car Performance and Fuel Efficiency"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exploring Car Performance and Fuel Efficiency}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+library(assignment4shinykkapoor)
+library(ggplot2)
+library(dplyr)
+```
+
+# Introduction
+
+This vignette demonstrates how to explore the cleaned cars_data dataset
+included in the assignment4shinykkapoor package. The dataset extends the
+classic mtcars data with new variables such as km_per_litre (fuel
+efficiency) and power_to_weight.
+
+We aim to communicate the relationship between engine power and fuel
+efficiency.
+
+# The Data
+
+```{r}
+head(get_cars_data())
+```
+
+## Key variables
+
+-   hp: engine horsepower (higher = more powerful engine)
+
+-   km_per_litre: fuel efficiency in kilometres per litre (higher =
+    cheaper to run)
+
+-   am: transmission type (“Automatic” or “Manual”)
+
+-   power_to_weight: horsepower divided by weight (how strong the engine
+    is relative to how heavy the car is)
+
+# Relationship Between Power and Efficiency
+
+```{r}
+get_cars_data() |>
+  ggplot(aes(x = hp, y = km_per_litre, color = am)) +
+  geom_point(size = 3, alpha = 0.8) +
+  labs(
+    x = "Horsepower",
+    y = "Fuel efficiency (km per litre)",
+    color = "Transmission",
+    title = "Higher horsepower usually lowers fuel efficiency"
+  ) +
+  theme_minimal()
+```
+
+## Interpretation
+
+We see a clear negative relationship: as horsepower increases, fuel
+efficiency (km per litre) tends to drop.
+
+-   Manual cars (often lighter) appear slightly more efficient at
+    comparable horsepower levels.
+
+## Interactive Exploration 
+
+You can explore these same relationships interactively using the
+dashboard bundled with this package:
+
+```         
+library(assignment4shinykkapoor)
+run_app()
+```
+
+The Shiny app allows you to:
+
+-   filter cars by cylinder count and horsepower range,
+
+-   visually compare horsepower vs fuel efficiency
+
+-   inspect a sortable data table of matching cars,
+
+-   read an English summary of the filtered subset.
+
+This makes the analysis accessible to someone who doesn’t use R, which
+is the core goal of ETC5523: communicating data clearly, not just
+calculating it.

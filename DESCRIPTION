@@ -1,0 +1,26 @@
+Package: assignment4shinykkapoor
+Title: Interactive Data Exploration Tools for ETC5523
+Version: 0.0.0.9000
+Authors@R: person("Kunal", "Kapoor", email = "kkap011@student.monash.edu", role = c("aut", "cre"))
+Description: This package was developed as part of the ETC5523 Communicating with Data unit at Monash University. It provides tools for exploring and visualizing a selected dataset in an interactive and reproducible way, including cleaned data, functions for exploration and summary, an interactive Shiny app, and a pkgdown website for documentation.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends: 
+    R (>= 3.5)
+Imports:
+    shiny,
+    ggplot2,
+    dplyr,
+    tibble,
+    bslib,
+    DT
+Suggests:
+    knitr,
+    rmarkdown,
+    pkgdown,
+    devtools,
+    usethis
+VignetteBuilder: knitr
+LazyData: true
