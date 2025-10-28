@@ -1,79 +1,98 @@
-# Load data from your package
-data_for_app <- assignment4shinykkapoor::get_cars_data()
+# inst/app/app.R
 
-ui <- shiny::fluidPage(
+library(shiny)
+library(dplyr)
+library(ggplot2)
+library(DT)
+library(bslib)
+library(assignment4shinykkapoor)
+
+data_for_app <- assignment4shinykkapoor::get_covid_data()
+
+ui <- fluidPage(
   theme = bslib::bs_theme(version = 5, bootswatch = "flatly"),
-  shiny::includeCSS("www/style.css"),
 
-  shiny::titlePanel("Car Performance & Fuel Efficiency Explorer"),
+  titlePanel("Quarantine Breach Risk Explorer"),
 
-  shiny::sidebarLayout(
-    shiny::sidebarPanel(
+  sidebarLayout(
+    sidebarPanel(
       width = 3,
 
-      shiny::selectInput(
-        "cyl_filter",
-        "Number of cylinders:",
-        choices = c("All", levels(data_for_app$cyl)),
-        selected = "All"
+      helpText(
+        "This dashboard explores daily modelled quarantine breach risk in Australia ",
+        "during the emergence of Delta. Data comes from Lydeamore et al. (2023, ",
+        "Science Advances) and was provided in ETC5523."
       ),
 
-      shiny::sliderInput(
-        "hp_range",
-        "Horsepower range:",
-        min = floor(min(data_for_app$hp)),
-        max = ceiling(max(data_for_app$hp)),
-        value = c(floor(min(data_for_app$hp)), ceiling(max(data_for_app$hp)))
+      selectInput(
+        "state_filter",
+        "State / region:",
+        choices = sort(unique(data_for_app$state)),
+        selected = "NSW"
       ),
 
-      shiny::helpText(
-        "Use these filters to limit which cars are shown.",
-        "This updates all tabs below.",
-        "Cars with more horsepower usually consume more fuel per km."
+      selectInput(
+        "metric_filter",
+        "Risk type:",
+        choices = sort(unique(data_for_app$metric)),
+        selected = "total"
       ),
 
-      shiny::hr(),
+      dateRangeInput(
+        "date_range",
+        "Date range:",
+        start = min(data_for_app$report_date),
+        end   = max(data_for_app$report_date),
+        min   = min(data_for_app$report_date),
+        max   = max(data_for_app$report_date)
+      ),
 
-      shiny::helpText(
-        "Tip:",
-        "Looking for 'best fuel economy for decent power'?",
-        "Sort the table by km_per_litre or power_to_weight."
+      hr(),
+helpText(
+        strong("How to read this:"),
+        tags$ul(
+          tags$li("Higher values = higher estimated outbreak or breach risk."),
+          tags$li('"total" = overall quarantine risk for that state on that day.'),
+          tags$li('"breach" = risk specifically linked to quarantine system failures.'),
+          tags$li("Not every state/day has a reliable 'breach' estimate. If a combination has no usable values, the app will fall back to 'total' only.")
+        )
       )
     ),
 
-    shiny::mainPanel(
+    mainPanel(
       width = 9,
 
-      shiny::tabsetPanel(
-        shiny::tabPanel(
-          "Fuel vs Power",
-          shiny::h3("Fuel Efficiency vs Horsepower"),
-          shiny::plotOutput("eff_plot"),
-          shiny::p(
-            "This chart compares horsepower (x-axis) and fuel efficiency (km per litre, y-axis).",
-            "Each point is a car. Colour shows transmission type.",
-            "Manual cars are often lighter, so for the same horsepower they can sometimes deliver better distance per litre."
+      tabsetPanel(
+
+        tabPanel(
+          "Risk Over Time",
+          h3("Daily risk trend"),
+          plotOutput("risk_plot"),
+          uiOutput("no_data_msg"),
+          p(
+            "This line shows how estimated risk changed over time for the selected state.",
+            "Spikes indicate periods where the system was under more pressure and more vulnerable ",
+            "to quarantine leakage into the community."
           )
         ),
 
-        shiny::tabPanel(
-          "Filtered Cars",
-          shiny::h3("Data Table"),
-          DT::dataTableOutput("cars_table"),
-          shiny::p(
-            "This is the filtered subset of cars. You can sort any column.",
-            "Use this to identify cars that are powerful but still relatively efficient."
+        tabPanel(
+          "Data Table",
+          h3("Filtered daily values"),
+          DTOutput("risk_table"),
+          p(
+            "These are the daily values after applying your filters.",
+            "Sort by 'value' to identify the most concerning days."
           )
         ),
 
-        shiny::tabPanel(
+        tabPanel(
           "Summary",
-          shiny::h3("Averages for Your Selection"),
-          shiny::verbatimTextOutput("summary_text"),
-          shiny::p(
-            "This text block gives a quick verbal summary of the trade-offs",
-            "you've currently selected. This is directly useful for communicating",
-            "your story in plain English — not just dumping numbers."
+          h3("Story for your selection"),
+          verbatimTextOutput("summary_text"),
+          p(
+            "This narrative is meant for non-technical communication.",
+            "It highlights when risk spiked, and whether the system looked stable or fragile."
           )
         )
       )
@@ -83,78 +102,133 @@ ui <- shiny::fluidPage(
 
 server <- function(input, output, session) {
 
-  # reactive filtered data based on user controls
-  filtered_data <- shiny::reactive({
-    df <- data_for_app
+  # Dynamically restrict metric choices based on state
+  observeEvent(input$state_filter, {
+    valid_metrics <- data_for_app |>
+      filter(state == input$state_filter) |>
+      filter(!is.na(value)) |>
+      distinct(metric) |>
+      arrange(metric) |>
+      pull(metric)
 
-    if (input$cyl_filter != "All") {
-      df <- dplyr::filter(df, cyl == input$cyl_filter)
-    }
-
-    df <- dplyr::filter(df,
-                        hp >= input$hp_range[1],
-                        hp <= input$hp_range[2]
+    # update the metric dropdown so we don't allow useless choices (e.g. AUS + breach if NA)
+    updateSelectInput(
+      session,
+      "metric_filter",
+      choices = valid_metrics,
+      selected = if (input$metric_filter %in% valid_metrics) input$metric_filter else valid_metrics[1]
     )
+  }, ignoreInit = FALSE)
 
-    df
-  })
-
-  # main scatterplot: horsepower vs km_per_litre
-  output$eff_plot <- shiny::renderPlot({
-    df <- filtered_data()
-    shiny::req(nrow(df) > 0)
-
-    ggplot2::ggplot(df, ggplot2::aes(x = hp, y = km_per_litre, color = am)) +
-      ggplot2::geom_point(size = 3, alpha = 0.8) +
-      ggplot2::labs(
-        x = "Horsepower",
-        y = "Fuel efficiency (km per litre)",
-        color = "Transmission"
-      ) +
-      ggplot2::theme_minimal()
-  })
-
-  # interactive table of filtered cars
-  output$cars_table <- DT::renderDataTable({
-    df <- filtered_data() |>
-      dplyr::select(
-        model,
-        cyl,
-        hp,
-        wt,
-        km_per_litre,
-        am,
-        gear,
-        power_to_weight
+  # Filter data reactively based on current inputs
+  filtered_data <- reactive({
+    data_for_app |>
+      filter(
+        state == input$state_filter,
+        metric == input$metric_filter,
+        report_date >= input$date_range[1],
+        report_date <= input$date_range[2]
       )
+  })
 
-    DT::datatable(
+  # Helper: does user have any non-missing data?
+  filtered_non_missing <- reactive({
+    filtered_data() |>
+      filter(!is.na(value))
+  })
+
+  # Risk trend plot
+  output$risk_plot <- renderPlot({
+    df <- filtered_non_missing()
+    req(nrow(df) > 0)  # don't try to plot empty data
+
+    ggplot(df, aes(x = report_date, y = value)) +
+      geom_line(linewidth = 1.2) +
+      geom_point(size = 2, alpha = 0.8) +
+      labs(
+        x = "Date",
+        y = "Risk level (modelled)",
+        title = paste(
+          input$state_filter,
+          "-", input$metric_filter,
+          "risk over time"
+        )
+      ) +
+      theme_minimal(base_size = 13)
+  })
+
+  # Message under the plot if there's no actual data to show
+  output$no_data_msg <- renderUI({
+    if (nrow(filtered_non_missing()) == 0) {
+      div(
+        style = "color:#a00; font-weight:500; margin-top:0.5rem;",
+        "No non-missing data available for this combination of state, risk type, and dates."
+      )
+    } else {
+      NULL
+    }
+  })
+
+  # Data table
+  output$risk_table <- renderDT({
+    df <- filtered_data() |>
+      arrange(desc(report_date))
+
+    datatable(
       df,
       rownames = FALSE,
       options = list(pageLength = 10)
     )
   })
 
-  # summary text
-  output$summary_text <- shiny::renderText({
-    df <- filtered_data()
-    shiny::req(nrow(df) > 0)
+  # Narrative summary
+  output$summary_text <- renderText({
+    df_all <- filtered_data()
+    df_clean <- filtered_non_missing()
 
-    avg_hp <- round(mean(df$hp), 1)
-    avg_kmL <- round(mean(df$km_per_litre), 2)
-    avg_weight <- round(mean(df$wt), 2)
+    if (nrow(df_all) == 0) {
+      return("No records in this date range.")
+    }
+
+    # average on non-missing values
+    avg_val <- if (nrow(df_clean) > 0) round(mean(df_clean$value), 2) else NA
+
+    if (nrow(df_clean) > 0) {
+      peak_row <- df_clean |>
+        slice_max(order_by = value, n = 1)
+      peak_msg <- paste0(
+        "The highest recorded value was ",
+        round(peak_row$value, 2),
+        " on ",
+        format(peak_row$report_date, "%Y-%m-%d"),
+        "."
+      )
+    } else {
+      peak_msg <- "All values in this selection are missing, so no peak can be identified."
+    }
 
     paste0(
-      "In your current selection:\n",
-      "- Avg horsepower: ", avg_hp, "\n",
-      "- Avg fuel efficiency: ", avg_kmL, " km/L\n",
-      "- Avg weight: ", avg_weight, " (1000 lbs)\n\n",
+      "You are looking at ", input$state_filter,
+      ", focusing on '", input$metric_filter, "' risk.\n\n",
+      "Date range: ",
+      format(input$date_range[1], "%Y-%m-%d"),
+      " to ",
+      format(input$date_range[2], "%Y-%m-%d"),
+      ".\n",
+
+      if (!is.na(avg_val)) {
+        paste0("- The average estimated risk was ", avg_val, ".\n")
+      } else {
+        "- The average estimated risk cannot be computed (all values are missing).\n"
+      },
+
+      "- ", peak_msg, "\n\n",
       "Interpretation:\n",
-      "As horsepower goes up, fuel efficiency usually goes down.\n",
-      "But lighter cars and manual transmissions can still deliver",
-      " decent km per litre at medium horsepower."
+      "Higher spikes indicate days where quarantine systems were more stressed ",
+      "or more likely to leak infection into the community. Consistently low values ",
+      "suggest periods of strong control."
     )
   })
 }
 
-shiny::shinyApp(ui, server)
+shinyApp(ui, server)

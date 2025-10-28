@@ -2,31 +2,45 @@
 % Please edit documentation in R/run_app.R
 \name{run_app}
 \alias{run_app}
-\title{Launch the Shiny dashboard}
+\title{Launch the Quarantine Breach Risk Dashboard}
 \usage{
 run_app()
 }
 \value{
-This function does not return a value; it launches a Shiny app.
+Invisibly launches the Shiny app; no R object is returned.
 }
 \description{
-This function starts the interactive Shiny app that is bundled
-with the assignment4shinykkapoor package.
+Starts the interactive Shiny dashboard bundled with the
+\code{assignment4shinykkapoor} package.
 }
 \details{
-The app lets you:
+The dashboard lets you:
 \itemize{
-\item filter cars by cylinder count and horsepower,
-\item see how horsepower relates to fuel efficiency,
-\item inspect a sortable table of matching cars,
-\item read an English summary of the trade-offs.
+\item choose an Australian state / territory (e.g. NSW, VIC, WA, ...),
+\item choose a risk type:
+\itemize{
+\item \code{total}: overall modelled quarantine outbreak risk,
+\item \code{breach}: risk attributed specifically to quarantine system failures
+(not always available for every state or every date),
+}
+\item pick a date range,
+\item visualise how daily estimated risk changes over time,
+\item view a sortable table of the filtered daily values,
+\item read an automatically generated plain-English summary highlighting
+when risk was highest.
 }
 
-The data used in the app is the cleaned \code{cars_data} dataset
-included in this package.
+Data comes from \code{covid_breach_data}, derived from modelling of
+quarantine breach / outbreak risk during the emergence of Delta
+(Lydeamore et al., 2023, \emph{Science Advances}), provided in ETC5523.
+
+Important limitation: some combinations of state and risk type do not have
+non-missing values (for example, national "breach" is mostly NA). The app
+will warn you when there is no usable data for your selection.
 }
 \examples{
 \dontrun{
   run_app()
 }
+
 }

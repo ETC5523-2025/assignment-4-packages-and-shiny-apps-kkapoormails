@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Interactive Data Exploration Tools for ETC5523 • assignment4shinykkapoor</title>
+<title>Quarantine Breach Risk Explorer for ETC5523 • assignment4shinykkapoor</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script><meta property="og:title" content="Interactive Data Exploration Tools for ETC5523">
-<meta property="og:description" content="This package was developed as part of the ETC5523 Communicating with Data unit at Monash University. It provides tools for exploring and visualizing a selected dataset in an interactive and reproducible way, including cleaned data, functions for exploration and summary, an interactive Shiny app, and a pkgdown website for documentation.">
+<script src="pkgdown.js"></script><meta property="og:title" content="Quarantine Breach Risk Explorer for ETC5523">
+<meta property="og:description" content='This package was developed for the ETC5523 Communicating with Data unit at Monash University. It includes: (1) a cleaned and documented dataset (covid_breach_data) derived from daily modelled quarantine outbreak / breach risk estimates for Australian states and territories during the emergence of the SARS-CoV-2 Delta variant (Lydeamore et al., 2023, Science Advances), (2) helper functions for accessing and summarising that data, (3) an interactive Shiny dashboard ("Quarantine Breach Risk Explorer") that allows users to select a state/region, choose a risk measure (overall quarantine risk vs breach-attributed risk), focus on a date range, and interpret periods of elevated risk, and (4) a pkgdown site and vignette explaining the communication choices. The goal is to communicate risk trends to a non-technical audience in a reproducible way.'>
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -42,6 +42,18 @@
 <li>
   <a href="reference/index.html">Reference</a>
 </li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="articles/overview.html">Quarantine Breach Risk Over Time</a>
+    </li>
+  </ul>
+</li>
       </ul>
 <ul class="nav navbar-nav navbar-right"></ul>
 </div>
@@ -58,17 +70,29 @@
 <div class="section level1">
 <div class="page-header"><h1 id="assignment4shinykkapoor">assignment4shinykkapoor<a class="anchor" aria-label="anchor" href="#assignment4shinykkapoor"></a>
 </h1></div>
+<p>This package was developed for ETC5523 (Communicating with Data).</p>
+<p>It provides: - a cleaned dataset <code>covid_breach_data</code>, which summarises estimated daily quarantine outbreak / breach risk for Australian states and territories during the Delta period (Oct 2020 – Jul 2021). This data was supplied in ETC5523 and is based on modelling reported in Lydeamore et al. (2023, <em>Science Advances</em>). - a helper function <code><a href="reference/get_covid_data.html">get_covid_data()</a></code> that returns the data as a tidy tibble: one row per (date × state × metric). - an interactive Shiny dashboard, launched with <code><a href="reference/run_app.html">run_app()</a></code>, that: - lets you select a state/territory (e.g. NSW, VIC, QLD, AUS), - choose a risk type (<code>total</code> vs <code>breach</code>), - choose a date range, - see how daily estimated risk changes over time, - view a filtered table of the values, - and read an automatically generated plain-English summary of when risk was highest.</p>
 <div class="section level2">
-<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+<h2 id="why-this-app-exists">Why this app exists<a class="anchor" aria-label="anchor" href="#why-this-app-exists"></a>
 </h2>
-<p><code>assignment4shinykkapoor</code> is an R package created for ETC5523 (Communicating with Data). It packages: - a cleaned car performance dataset (<code>cars_data</code>), - documented helper functions, - and an interactive Shiny dashboard for exploring fuel efficiency vs power.</p>
-<p>The goal is to communicate insights, not just dump numbers: - Which cars are powerful but still fuel-efficient? - How does horsepower relate to km per litre? - Do manual cars behave differently to automatics?</p>
+<p>The goal is not just plotting numbers. The goal is communication.</p>
+<ul>
+<li>
+<code>"total"</code> represents overall quarantine outbreak / leakage risk for that region on that date.</li>
+<li>
+<code>"breach"</code> focuses on risk attributed specifically to quarantine system failures (leakage).</li>
+</ul>
+<p>Spikes in these time series suggest periods when the system was under stress and more likely to leak infection into the community. Long flat low periods suggest control/stability.</p>
+<p>Not every region has non-missing <code>"breach"</code> values for all dates (for example, <code>AUS</code> breach is mostly <code>NA</code>).<br>
+The app reacts to this — it only offers you combinations of state + metric that actually have data, and if there’s nothing to plot it tells you that clearly.</p>
+<p>This is deliberate: the dashboard is designed to help a non-technical audience understand <em>when</em> and <em>where</em> the system looked fragile.</p>
 </div>
 <div class="section level2">
-<h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
+<h2 id="installing-development-version">Installing (development version)<a class="anchor" aria-label="anchor" href="#installing-development-version"></a>
 </h2>
-<p>The dataset <code>cars_data</code> is derived from the built-in <code>mtcars</code> dataset. I added: - <code>km_per_litre</code> (fuel efficiency in km/L), - <code>power_to_weight</code> (hp divided by weight), - readable labels for transmission (Automatic / Manual), - <code>model</code> as an explicit column.</p>
-<p>You can load it with: ```r library(assignment4shinykkapoor) head(get_cars_data())</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># from inside the repo directory</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
   </div>

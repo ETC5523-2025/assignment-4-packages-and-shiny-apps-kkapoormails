@@ -1,30 +1,40 @@
-#' Launch the Shiny dashboard
+#' Launch the Quarantine Breach Risk Dashboard
 #'
-#' This function starts the interactive Shiny app that is bundled
-#' with the assignment4shinykkapoor package.
+#' Starts the interactive Shiny dashboard bundled with the
+#' \code{assignment4shinykkapoor} package.
 #'
-#' The app lets you:
+#' The dashboard lets you:
 #' \itemize{
-#'   \item filter cars by cylinder count and horsepower,
-#'   \item see how horsepower relates to fuel efficiency,
-#'   \item inspect a sortable table of matching cars,
-#'   \item read an English summary of the trade-offs.
+#'   \item choose an Australian state / territory (e.g. NSW, VIC, WA, ...),
+#'   \item choose a risk type:
+#'         \itemize{
+#'           \item \code{total}: overall modelled quarantine outbreak risk,
+#'           \item \code{breach}: risk attributed specifically to quarantine system failures
+#'                 (not always available for every state or every date),
+#'         }
+#'   \item pick a date range,
+#'   \item visualise how daily estimated risk changes over time,
+#'   \item view a sortable table of the filtered daily values,
+#'   \item read an automatically generated plain-English summary highlighting
+#'         when risk was highest.
 #' }
 #'
-#' The data used in the app is the cleaned \code{cars_data} dataset
-#' included in this package.
+#' Data comes from \code{covid_breach_data}, derived from modelling of
+#' quarantine breach / outbreak risk during the emergence of Delta
+#' (Lydeamore et al., 2023, \emph{Science Advances}), provided in ETC5523.
 #'
-#' @return This function does not return a value; it launches a Shiny app.
+#' Important limitation: some combinations of state and risk type do not have
+#' non-missing values (for example, national "breach" is mostly NA). The app
+#' will warn you when there is no usable data for your selection.
+#'
+#' @return Invisibly launches the Shiny app; no R object is returned.
+#'
 #' @examples
 #' \dontrun{
 #'   run_app()
 #' }
-#' @importFrom shiny runApp fluidPage tabsetPanel tabPanel sidebarLayout sidebarPanel mainPanel selectInput sliderInput plotOutput dataTableOutput renderPlot renderTable
-#' @importFrom DT datatable
-#' @importFrom dplyr filter mutate select
-#' @importFrom ggplot2 ggplot aes geom_point labs theme_minimal
-#' @importFrom tibble tibble
-#' @importFrom bslib bs_theme
+#'
+#' @importFrom shiny runApp
 #' @export
 run_app <- function() {
   app_dir <- system.file("app", package = "assignment4shinykkapoor")

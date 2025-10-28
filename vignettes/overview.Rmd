@@ -1,92 +1,130 @@
 ---
-title: "Exploring Car Performance and Fuel Efficiency"
+title: "Quarantine Breach Risk Over Time"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Exploring Car Performance and Fuel Efficiency}
-  \usepackage[utf8]{inputenc}
+  %\VignetteIndexEntry{Quarantine Breach Risk Over Time}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  markdown: 
-    wrap: 72
+  \usepackage[utf8]{inputenc}
 ---
 
 ```{r setup, include=FALSE}
 library(assignment4shinykkapoor)
-library(ggplot2)
 library(dplyr)
+library(ggplot2)
 ```
 
-# Introduction
+## Overview
 
-This vignette demonstrates how to explore the cleaned cars_data dataset
-included in the assignment4shinykkapoor package. The dataset extends the
-classic mtcars data with new variables such as km_per_litre (fuel
-efficiency) and power_to_weight.
+This vignette introduces the covid_breach_data dataset included in the
+assignment4shinykkapoor package.
 
-We aim to communicate the relationship between engine power and fuel
-efficiency.
+The dataset comes from modelling work on quarantine outbreak/breach
+risk during the emergence of the SARS-CoV-2 Delta variant in Australia
+(Lydeamore et al., 2023, Science Advances). It was supplied for analysis
+in ETC5523.
 
-# The Data
+Each row represents:
+	•	one date,
+	•	one state/territory (e.g. NSW, VIC, QLD, AUS),
+	•	one risk metric (either "total" or "breach"),
+	•	a numeric value estimating daily risk.
+
+We can use this dataset to explore how quarantine system risk changed
+over time in different parts of Australia.
 
 ```{r}
-head(get_cars_data())
+head(get_covid_data())
 ```
 
-## Key variables
+## Total risk vs breach-related risk
 
--   hp: engine horsepower (higher = more powerful engine)
+The data records two related quantities:
+	•	total: estimated overall quarantine risk,
+i.e. the modelled likelihood that the quarantine system could lead to
+spread into the community.
+	•	breach: a more specific estimate focused on risks associated with
+quarantine system failures or “leaks”.
 
--   km_per_litre: fuel efficiency in kilometres per litre (higher =
-    cheaper to run)
+Not every state has both series available for every day. For example,
+some combinations (like AUS + breach) may be missing or entirely NA.
+That reflects limits of what could be modelled or attributed at that level.
 
--   am: transmission type (“Automatic” or “Manual”)
+For communication, this matters:
+you should not assume every line is available for every region.
 
--   power_to_weight: horsepower divided by weight (how strong the engine
-    is relative to how heavy the car is)
+In the Shiny dashboard included with this package, the sidebar lets the
+user choose both a state/territory and a risk metric ("total" or
+"breach"). The app is data-aware: if a state does not have meaningful
+values for `breach` (for example, if all those values are missing), the
+dashboard will automatically hide `breach` for that state and only offer
+`total`. This prevents the user from seeing an empty plot and also makes
+the limitation explicit instead of pretending the data exists.
 
-# Relationship Between Power and Efficiency
+## Example: NSW risk over time
+
+Below we focus on New South Wales (NSW) and look at the "total" risk
+time series over the full period in the dataset.
 
 ```{r}
-get_cars_data() |>
-  ggplot(aes(x = hp, y = km_per_litre, color = am)) +
-  geom_point(size = 3, alpha = 0.8) +
+covid <- get_covid_data()
+
+nsw_total <- covid |> 
+  filter(state == "NSW", metric == "total") |> 
+  filter(!is.na(value))
+
+head(nsw_total)
+```
+
+Now we plot the daily risk for NSW.
+
+```{r}
+ggplot(nsw_total, aes(x = report_date, y = value)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2, alpha = 0.8) +
   labs(
-    x = "Horsepower",
-    y = "Fuel efficiency (km per litre)",
-    color = "Transmission",
-    title = "Higher horsepower usually lowers fuel efficiency"
+    x = "Date",
+    y = "Estimated risk level",
+    title = "NSW quarantine risk over time (total risk metric)"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 13)
 ```
 
-## Interpretation
+## Interpreting the plot
 
-We see a clear negative relationship: as horsepower increases, fuel
-efficiency (km per litre) tends to drop.
+This plot shows how the modelled quarantine-related risk for NSW
+changed day by day.
 
--   Manual cars (often lighter) appear slightly more efficient at
-    comparable horsepower levels.
+Spikes in the line correspond to periods where the quarantine system
+was under more strain or judged more likely to “leak” infection into the
+community.
 
-## Interactive Exploration 
+Sustained low values suggest times where quarantine controls were
+working reliably.
 
-You can explore these same relationships interactively using the
-dashboard bundled with this package:
+In practice, this means:
+- If you see a single sharp peak, that could indicate an acute incident
+(e.g. a specific breach or failure).
+- If you see an extended elevated plateau, that could indicate a longer
+period in which the system was struggling, not just a one-off event.
 
-```         
-library(assignment4shinykkapoor)
-run_app()
-```
+These interpretations are exactly the kind of narrative you would
+communicate to a non-technical audience, policy team, or media outlet.
 
-The Shiny app allows you to:
 
--   filter cars by cylinder count and horsepower range,
+## Why this matters for dashboard design
 
--   visually compare horsepower vs fuel efficiency
+The interactive Shiny app in this package does three things:
+	1.	It lets users choose a state/territory and a risk metric (total or breach),
+then view that state’s daily risk as a time series.
+	2.	It allows date range filtering, so someone can zoom in on periods
+of interest (for example, December 2020 vs June 2021).
+	3.	It automatically generates plain-language summaries, including:
+	•	the average risk in the selected window,
+	•	the date of the peak,
+	•	an interpretation paragraph about what that means.
 
--   inspect a sortable data table of matching cars,
+This is intentional.
+The goal is not just to dump raw numbers, but to support a story like:
 
--   read an English summary of the filtered subset.
-
-This makes the analysis accessible to someone who doesn’t use R, which
-is the core goal of ETC5523: communicating data clearly, not just
-calculating it.
+“In early January 2021, NSW showed elevated breach-related risk,
+followed by a decline. By late February the system appeared more stable.”

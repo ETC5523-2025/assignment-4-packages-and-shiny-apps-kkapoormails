@@ -1,26 +1,36 @@
 # assignment4shinykkapoor
 
-## Overview
-`assignment4shinykkapoor` is an R package created for ETC5523 (Communicating with Data).
-It packages:
-- a cleaned car performance dataset (`cars_data`),
-- documented helper functions,
-- and an interactive Shiny dashboard for exploring fuel efficiency vs power.
+This package was developed for ETC5523 (Communicating with Data).
 
-The goal is to communicate insights, not just dump numbers:
-- Which cars are powerful but still fuel-efficient?
-- How does horsepower relate to km per litre?
-- Do manual cars behave differently to automatics?
+It provides:
+- a cleaned dataset `covid_breach_data`, which summarises estimated daily quarantine outbreak / breach risk for Australian states and territories during the Delta period (Oct 2020 – Jul 2021). This data was supplied in ETC5523 and is based on modelling reported in Lydeamore et al. (2023, *Science Advances*).
+- a helper function `get_covid_data()` that returns the data as a tidy tibble: one row per (date × state × metric).
+- an interactive Shiny dashboard, launched with `run_app()`, that:
+  - lets you select a state/territory (e.g. NSW, VIC, QLD, AUS),
+  - choose a risk type (`total` vs `breach`),
+  - choose a date range,
+  - see how daily estimated risk changes over time,
+  - view a filtered table of the values,
+  - and read an automatically generated plain-English summary of when risk was highest.
 
-## Data
-The dataset `cars_data` is derived from the built-in `mtcars` dataset.
-I added:
-- `km_per_litre` (fuel efficiency in km/L),
-- `power_to_weight` (hp divided by weight),
-- readable labels for transmission (Automatic / Manual),
-- `model` as an explicit column.
+## Why this app exists
 
-You can load it with:
+The goal is not just plotting numbers. The goal is communication.
+
+- `"total"` represents overall quarantine outbreak / leakage risk for that region on that date.
+- `"breach"` focuses on risk attributed specifically to quarantine system failures (leakage).
+
+Spikes in these time series suggest periods when the system was under stress and more likely to leak infection into the community. Long flat low periods suggest control/stability.
+
+Not every region has non-missing `"breach"` values for all dates (for example, `AUS` breach is mostly `NA`).  
+The app reacts to this — it only offers you combinations of state + metric that actually have data, and if there’s nothing to plot it tells you that clearly.
+
+This is deliberate: the dashboard is designed to help a non-technical audience understand *when* and *where* the system looked fragile.
+
+## Installing (development version)
+
 ```r
-library(assignment4shinykkapoor)
-head(get_cars_data())
+# from inside the repo directory
+devtools::install(".")
+```
+

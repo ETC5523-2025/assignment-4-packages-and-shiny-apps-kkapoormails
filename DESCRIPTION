@@ -1,8 +1,18 @@
 Package: assignment4shinykkapoor
-Title: Interactive Data Exploration Tools for ETC5523
+Title: Quarantine Breach Risk Explorer for ETC5523
 Version: 0.0.0.9000
 Authors@R: person("Kunal", "Kapoor", email = "kkap011@student.monash.edu", role = c("aut", "cre"))
-Description: This package was developed as part of the ETC5523 Communicating with Data unit at Monash University. It provides tools for exploring and visualizing a selected dataset in an interactive and reproducible way, including cleaned data, functions for exploration and summary, an interactive Shiny app, and a pkgdown website for documentation.
+Description: This package was developed for the ETC5523 Communicating with Data unit at Monash University.
+    It includes:
+    (1) a cleaned and documented dataset ('covid_breach_data') derived from daily modelled quarantine
+    outbreak / breach risk estimates for Australian states and territories during the emergence of the
+    SARS-CoV-2 Delta variant (Lydeamore et al., 2023, Science Advances),
+    (2) helper functions for accessing and summarising that data,
+    (3) an interactive Shiny dashboard ("Quarantine Breach Risk Explorer") that allows users to
+    select a state/region, choose a risk measure (overall quarantine risk vs breach-attributed risk),
+    focus on a date range, and interpret periods of elevated risk, and
+    (4) a pkgdown site and vignette explaining the communication choices.
+    The goal is to communicate risk trends to a non-technical audience in a reproducible way.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
