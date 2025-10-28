@@ -1,36 +1,60 @@
-# assignment4shinykkapoor
+# CovidRiskExplorer
 
-This package was developed for ETC5523 (Communicating with Data).
+**CovidRiskExplorer** is an R package built for the Monash University unit  
+**ETC5523 – Communicating with Data**.
 
-It provides:
-- a cleaned dataset `covid_breach_data`, which summarises estimated daily quarantine outbreak / breach risk for Australian states and territories during the Delta period (Oct 2020 – Jul 2021). This data was supplied in ETC5523 and is based on modelling reported in Lydeamore et al. (2023, *Science Advances*).
-- a helper function `get_covid_data()` that returns the data as a tidy tibble: one row per (date × state × metric).
-- an interactive Shiny dashboard, launched with `run_app()`, that:
-  - lets you select a state/territory (e.g. NSW, VIC, QLD, AUS),
-  - choose a risk type (`total` vs `breach`),
-  - choose a date range,
-  - see how daily estimated risk changes over time,
-  - view a filtered table of the values,
-  - and read an automatically generated plain-English summary of when risk was highest.
+It provides an interactive dashboard and reproducible workflow for exploring **modelled quarantine breach risk in Australia** during the **Delta variant period (2020–2021)**.
 
-## Why this app exists
+---
 
-The goal is not just plotting numbers. The goal is communication.
+### What it does
 
-- `"total"` represents overall quarantine outbreak / leakage risk for that region on that date.
-- `"breach"` focuses on risk attributed specifically to quarantine system failures (leakage).
+The package helps communicate **when and where quarantine systems were most vulnerable** to leakage into the community.  
+It includes:
+- A cleaned dataset `covid_breach_data` from *Lydeamore et al. (2023, Science Advances)*  
+- A helper function `get_covid_data()`  
+- An interactive dashboard launched by `run_app()`  
+- A vignette explaining the data, methods, and interpretation
 
-Spikes in these time series suggest periods when the system was under stress and more likely to leak infection into the community. Long flat low periods suggest control/stability.
+---
 
-Not every region has non-missing `"breach"` values for all dates (for example, `AUS` breach is mostly `NA`).  
-The app reacts to this — it only offers you combinations of state + metric that actually have data, and if there’s nothing to plot it tells you that clearly.
+### Installation and use
 
-This is deliberate: the dashboard is designed to help a non-technical audience understand *when* and *where* the system looked fragile.
-
-## Installing (development version)
-
-```r
-# from inside the repo directory
-devtools::install(".")
+# Install and load
 ```
+```{r} 
+devtools::install()
+library(CovidRiskExplorer)
+```
+
+# Access the data
+```
+```{r}
+head(get_covid_data())
+```
+
+# Launch the dashboard
+```
+```{r}
+run_app()
+```
+
+## Data Source   
+Lydeamore et al. (2023).
+“Delta and quarantine risk: transmission-blocking and coverage thresholds.”
+Science Advances, 9(3): abm3624.
+Data provided via Monash ETC5523 teaching materials.
+
+
+## Interpretation Example  
+
+During the Delta period, states such as NSW and Victoria show clear spikes in quarantine breach risk — particularly around mid-2021 — aligning with real-world outbreaks and quarantine system pressure.
+By contrast, Queensland and Western Australia remained relatively stable, suggesting stronger containment or lower exposure at the time.
+
+
+
+## License 
+
+MIT + file LICENSE
+Author: Kunal Kapoor
 

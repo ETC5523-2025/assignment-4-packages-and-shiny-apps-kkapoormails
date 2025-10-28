@@ -1,33 +1,23 @@
 #' Launch the Quarantine Breach Risk Dashboard
 #'
-#' Starts the interactive Shiny dashboard bundled with the
-#' \code{assignment4shinykkapoor} package.
+#' This function starts the interactive Shiny app bundled with the
+#' \code{CovidRiskExplorer} package.
 #'
-#' The dashboard lets you:
+#' The dashboard allows you to:
 #' \itemize{
-#'   \item choose an Australian state / territory (e.g. NSW, VIC, WA, ...),
-#'   \item choose a risk type:
-#'         \itemize{
-#'           \item \code{total}: overall modelled quarantine outbreak risk,
-#'           \item \code{breach}: risk attributed specifically to quarantine system failures
-#'                 (not always available for every state or every date),
-#'         }
-#'   \item pick a date range,
-#'   \item visualise how daily estimated risk changes over time,
-#'   \item view a sortable table of the filtered daily values,
-#'   \item read an automatically generated plain-English summary highlighting
-#'         when risk was highest.
+#'   \item select an Australian state/territory,
+#'   \item choose a risk type (overall quarantine risk vs breach-related risk),
+#'   \item choose a date range,
+#'   \item view how daily estimated risk changes over time,
+#'   \item inspect a table of daily values,
+#'   \item read an automatically generated plain-English summary that explains when risk was highest.
 #' }
 #'
-#' Data comes from \code{covid_breach_data}, derived from modelling of
-#' quarantine breach / outbreak risk during the emergence of Delta
-#' (Lydeamore et al., 2023, \emph{Science Advances}), provided in ETC5523.
+#' The data used in the app is \code{covid_breach_data}, which is derived
+#' from modelling of quarantine outbreak/breach risk during the Delta period
+#' (Lydeamore et al., 2023, Science Advances) and provided in ETC5523.
 #'
-#' Important limitation: some combinations of state and risk type do not have
-#' non-missing values (for example, national "breach" is mostly NA). The app
-#' will warn you when there is no usable data for your selection.
-#'
-#' @return Invisibly launches the Shiny app; no R object is returned.
+#' @return This function does not return a value; it launches the Shiny app.
 #'
 #' @examples
 #' \dontrun{
@@ -37,6 +27,6 @@
 #' @importFrom shiny runApp
 #' @export
 run_app <- function() {
-  app_dir <- system.file("app", package = "assignment4shinykkapoor")
+  app_dir <- system.file("app", package = "CovidRiskExplorer")
   shiny::runApp(app_dir, display.mode = "normal")
 }

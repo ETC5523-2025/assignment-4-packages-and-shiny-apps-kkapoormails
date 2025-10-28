@@ -5,9 +5,9 @@ library(dplyr)
 library(ggplot2)
 library(DT)
 library(bslib)
-library(assignment4shinykkapoor)
+library(CovidRiskExplorer)
 
-data_for_app <- assignment4shinykkapoor::get_covid_data()
+data_for_app <- CovidRiskExplorer::get_covid_data()
 
 ui <- fluidPage(
   theme = bslib::bs_theme(version = 5, bootswatch = "flatly"),
@@ -140,7 +140,7 @@ server <- function(input, output, session) {
   # Risk trend plot
   output$risk_plot <- renderPlot({
     df <- filtered_non_missing()
-    req(nrow(df) > 0)  # don't try to plot empty data
+    req(nrow(df) > 0)
 
     ggplot(df, aes(x = report_date, y = value)) +
       geom_line(linewidth = 1.2) +

@@ -8,7 +8,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-library(assignment4shinykkapoor)
+library(CovidRiskExplorer)
 library(dplyr)
 library(ggplot2)
 ```
@@ -16,7 +16,7 @@ library(ggplot2)
 ## Overview
 
 This vignette introduces the covid_breach_data dataset included in the
-assignment4shinykkapoor package.
+CovidRiskExplorer package.
 
 The dataset comes from modelling work on quarantine outbreak/breach
 risk during the emergence of the SARS-CoV-2 Delta variant in Australia

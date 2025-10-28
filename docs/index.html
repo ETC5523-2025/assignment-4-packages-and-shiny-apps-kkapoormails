@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quarantine Breach Risk Explorer for ETC5523 • assignment4shinykkapoor</title>
+<title>Quarantine Breach Risk Explorer for ETC5523 • CovidRiskExplorer</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
@@ -32,7 +32,7 @@
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="index.html">assignment4shinykkapoor</a>
+        <a class="navbar-link" href="index.html">CovidRiskExplorer</a>
         <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9000</span>
       </span>
     </div>
@@ -67,34 +67,63 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
+
 <div class="section level1">
-<div class="page-header"><h1 id="assignment4shinykkapoor">assignment4shinykkapoor<a class="anchor" aria-label="anchor" href="#assignment4shinykkapoor"></a>
+<div class="page-header"><h1 id="covidriskexplorer">CovidRiskExplorer<a class="anchor" aria-label="anchor" href="#covidriskexplorer"></a>
 </h1></div>
-<p>This package was developed for ETC5523 (Communicating with Data).</p>
-<p>It provides: - a cleaned dataset <code>covid_breach_data</code>, which summarises estimated daily quarantine outbreak / breach risk for Australian states and territories during the Delta period (Oct 2020 – Jul 2021). This data was supplied in ETC5523 and is based on modelling reported in Lydeamore et al. (2023, <em>Science Advances</em>). - a helper function <code><a href="reference/get_covid_data.html">get_covid_data()</a></code> that returns the data as a tidy tibble: one row per (date × state × metric). - an interactive Shiny dashboard, launched with <code><a href="reference/run_app.html">run_app()</a></code>, that: - lets you select a state/territory (e.g. NSW, VIC, QLD, AUS), - choose a risk type (<code>total</code> vs <code>breach</code>), - choose a date range, - see how daily estimated risk changes over time, - view a filtered table of the values, - and read an automatically generated plain-English summary of when risk was highest.</p>
+<p><strong>CovidRiskExplorer</strong> is an R package built for the Monash University unit<br><strong>ETC5523 – Communicating with Data</strong>.</p>
+<p>It provides an interactive dashboard and reproducible workflow for exploring <strong>modelled quarantine breach risk in Australia</strong> during the <strong>Delta variant period (2020–2021)</strong>.</p>
+<hr>
+<div class="section level3">
+<h3 id="what-it-does">What it does<a class="anchor" aria-label="anchor" href="#what-it-does"></a>
+</h3>
+<p>The package helps communicate <strong>when and where quarantine systems were most vulnerable</strong> to leakage into the community.<br>
+It includes: - A cleaned dataset <code>covid_breach_data</code> from <em>Lydeamore et al. (2023, Science Advances)</em><br>
+- A helper function <code><a href="reference/get_covid_data.html">get_covid_data()</a></code><br>
+- An interactive dashboard launched by <code><a href="reference/run_app.html">run_app()</a></code><br>
+- A vignette explaining the data, methods, and interpretation</p>
+<hr>
+</div>
+<div class="section level3">
+<h3 id="installation-and-use">Installation and use<a class="anchor" aria-label="anchor" href="#installation-and-use"></a>
+</h3>
+</div>
+</div>
+<div class="section level1">
+<h1 id="install-and-load">Install and load<a class="anchor" aria-label="anchor" href="#install-and-load"></a>
+</h1>
+<pre><code>```{r}
+devtools::install()
+library(CovidRiskExplorer)</code></pre>
+</div>
+<div class="section level1">
+<h1 id="access-the-data">Access the data<a class="anchor" aria-label="anchor" href="#access-the-data"></a>
+</h1>
+<pre><code>```{r}
+head(get_covid_data())</code></pre>
+</div>
+<div class="section level1">
+<h1 id="launch-the-dashboard">Launch the dashboard<a class="anchor" aria-label="anchor" href="#launch-the-dashboard"></a>
+</h1>
+<pre><code>```{r}
+run_app()</code></pre>
 <div class="section level2">
-<h2 id="why-this-app-exists">Why this app exists<a class="anchor" aria-label="anchor" href="#why-this-app-exists"></a>
+<h2 id="data-source">Data Source<a class="anchor" aria-label="anchor" href="#data-source"></a>
 </h2>
-<p>The goal is not just plotting numbers. The goal is communication.</p>
-<ul>
-<li>
-<code>"total"</code> represents overall quarantine outbreak / leakage risk for that region on that date.</li>
-<li>
-<code>"breach"</code> focuses on risk attributed specifically to quarantine system failures (leakage).</li>
-</ul>
-<p>Spikes in these time series suggest periods when the system was under stress and more likely to leak infection into the community. Long flat low periods suggest control/stability.</p>
-<p>Not every region has non-missing <code>"breach"</code> values for all dates (for example, <code>AUS</code> breach is mostly <code>NA</code>).<br>
-The app reacts to this — it only offers you combinations of state + metric that actually have data, and if there’s nothing to plot it tells you that clearly.</p>
-<p>This is deliberate: the dashboard is designed to help a non-technical audience understand <em>when</em> and <em>where</em> the system looked fragile.</p>
+<p>Lydeamore et al. (2023). “Delta and quarantine risk: transmission-blocking and coverage thresholds.” Science Advances, 9(3): abm3624. Data provided via Monash ETC5523 teaching materials.</p>
 </div>
 <div class="section level2">
-<h2 id="installing-development-version">Installing (development version)<a class="anchor" aria-label="anchor" href="#installing-development-version"></a>
+<h2 id="interpretation-example">Interpretation Example<a class="anchor" aria-label="anchor" href="#interpretation-example"></a>
 </h2>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># from inside the repo directory</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
+<p>During the Delta period, states such as NSW and Victoria show clear spikes in quarantine breach risk — particularly around mid-2021 — aligning with real-world outbreaks and quarantine system pressure. By contrast, Queensland and Western Australia remained relatively stable, suggesting stronger containment or lower exposure at the time.</p>
+</div>
+<div class="section level2">
+<h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
+</h2>
+<p>MIT + file LICENSE Author: Kunal Kapoor</p>
 </div>
 </div>
+
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -110,7 +139,7 @@ The app reacts to this — it only offers you combinations of state + metric tha
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing assignment4shinykkapoor</a></li>
+<li><a href="authors.html#citation">Citing CovidRiskExplorer</a></li>
 </ul>
 </div>
 
