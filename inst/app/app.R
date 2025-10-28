@@ -6,6 +6,7 @@ library(ggplot2)
 library(DT)
 library(bslib)
 library(CovidRiskExplorer)
+library(plotly)
 
 data_for_app <- CovidRiskExplorer::get_covid_data()
 
@@ -67,7 +68,7 @@ helpText(
         tabPanel(
           "Risk Over Time",
           h3("Daily risk trend"),
-          plotOutput("risk_plot"),
+          plotlyOutput("risk_plot"),
           uiOutput("no_data_msg"),
           p(
             "This line shows how estimated risk changed over time for the selected state.",
@@ -138,11 +139,11 @@ server <- function(input, output, session) {
   })
 
   # Risk trend plot
-  output$risk_plot <- renderPlot({
+  output$risk_plot <- plotly::renderPlotly({
     df <- filtered_non_missing()
     req(nrow(df) > 0)
 
-    ggplot(df, aes(x = report_date, y = value)) +
+    p <- ggplot(df, aes(x = report_date, y = value)) +
       geom_line(linewidth = 1.2) +
       geom_point(size = 2, alpha = 0.8) +
       labs(
@@ -155,8 +156,9 @@ server <- function(input, output, session) {
         )
       ) +
       theme_minimal(base_size = 13)
-  })
 
+    plotly::ggplotly(p, tooltip = c("x", "y"))
+  })
   # Message under the plot if there's no actual data to show
   output$no_data_msg <- renderUI({
     if (nrow(filtered_non_missing()) == 0) {

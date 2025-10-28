@@ -2,4 +2,6 @@
 
 export(get_covid_data)
 export(run_app)
+importFrom(plotly,ggplotly)
+importFrom(plotly,renderPlotly)
 importFrom(shiny,runApp)

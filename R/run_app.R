@@ -18,13 +18,14 @@
 #' (Lydeamore et al., 2023, Science Advances) and provided in ETC5523.
 #'
 #' @return This function does not return a value; it launches the Shiny app.
-#'
+
 #' @examples
 #' \dontrun{
 #'   run_app()
 #' }
 #'
 #' @importFrom shiny runApp
+#' @importFrom plotly ggplotly renderPlotly
 #' @export
 run_app <- function() {
   app_dir <- system.file("app", package = "CovidRiskExplorer")

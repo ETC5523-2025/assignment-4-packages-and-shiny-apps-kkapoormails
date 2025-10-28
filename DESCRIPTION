@@ -25,7 +25,8 @@ Imports:
     dplyr,
     tibble,
     bslib,
-    DT
+    DT,
+    plotly
 Suggests:
     knitr,
     rmarkdown,
