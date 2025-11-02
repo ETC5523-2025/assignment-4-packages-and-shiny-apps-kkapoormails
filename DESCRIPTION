@@ -26,7 +26,8 @@ Imports:
     tibble,
     bslib,
     DT,
-    plotly
+    plotly,
+    zoo
 Suggests:
     knitr,
     rmarkdown,

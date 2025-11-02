@@ -1,127 +1,116 @@
 # inst/app/app.R
 
+# Libraries
 library(shiny)
 library(dplyr)
 library(ggplot2)
+library(plotly)
 library(DT)
 library(bslib)
+library(lubridate)
 library(CovidRiskExplorer)
-library(plotly)
 
+# Data
 data_for_app <- CovidRiskExplorer::get_covid_data()
 
-ui <- fluidPage(
-  theme = bslib::bs_theme(version = 5, bootswatch = "flatly"),
-
-  titlePanel("Quarantine Breach Risk Explorer"),
-
-  sidebarLayout(
-    sidebarPanel(
-      width = 3,
-
-      helpText(
-        "This dashboard explores daily modelled quarantine breach risk in Australia ",
-        "during the emergence of Delta. Data comes from Lydeamore et al. (2023, ",
-        "Science Advances) and was provided in ETC5523."
-      ),
-
-      selectInput(
-        "state_filter",
-        "State / region:",
-        choices = sort(unique(data_for_app$state)),
-        selected = "NSW"
-      ),
-
-      selectInput(
-        "metric_filter",
-        "Risk type:",
-        choices = sort(unique(data_for_app$metric)),
-        selected = "total"
-      ),
-
-      dateRangeInput(
-        "date_range",
-        "Date range:",
-        start = min(data_for_app$report_date),
-        end   = max(data_for_app$report_date),
-        min   = min(data_for_app$report_date),
-        max   = max(data_for_app$report_date)
-      ),
-
-      hr(),
-helpText(
-        strong("How to read this:"),
-        tags$ul(
-          tags$li("Higher values = higher estimated outbreak or breach risk."),
-          tags$li('"total" = overall quarantine risk for that state on that day.'),
-          tags$li('"breach" = risk specifically linked to quarantine system failures.'),
-          tags$li("Not every state/day has a reliable 'breach' estimate. If a combination has no usable values, the app will fall back to 'total' only.")
-        )
-      )
-    ),
-
-    mainPanel(
-      width = 9,
-
-      tabsetPanel(
-
-        tabPanel(
-          "Risk Over Time",
-          h3("Daily risk trend"),
-          plotlyOutput("risk_plot"),
-          uiOutput("no_data_msg"),
-          p(
-            "This line shows how estimated risk changed over time for the selected state.",
-            "Spikes indicate periods where the system was under more pressure and more vulnerable ",
-            "to quarantine leakage into the community."
-          )
-        ),
-
-        tabPanel(
-          "Data Table",
-          h3("Filtered daily values"),
-          DTOutput("risk_table"),
-          p(
-            "These are the daily values after applying your filters.",
-            "Sort by 'value' to identify the most concerning days."
-          )
-        ),
-
-        tabPanel(
-          "Summary",
-          h3("Story for your selection"),
-          verbatimTextOutput("summary_text"),
-          p(
-            "This narrative is meant for non-technical communication.",
-            "It highlights when risk spiked, and whether the system looked stable or fragile."
-          )
-        )
-      )
-    )
-  )
+# Theme
+app_theme <- bs_theme(
+  version = 5,
+  base_font    = font_google("Inter"),
+  heading_font = font_google("Inter"),
+  primary = "#4C6EF5",  # indigo
+  success = "#1E7A46",  # deep green
+  bg = "#F8FAFC", fg = "#0F172A",
+  "card-bg"  = "#FFFFFF", "input-bg" = "#FFFFFF", "navbar-bg"= "#FFFFFF"
 )
 
+# UI
+ui <- page_sidebar(
+  title = "Quarantine Breach Risk Explorer",
+  theme = app_theme,
+
+  sidebar = sidebar(
+    radioButtons(
+      "chart_style", "Chart style:",
+      choices = c("Line" = "line", "Compare (weekly bars)" = "compare_bars")
+    ),
+    selectInput(
+      "state_filter", "State / region:",
+      choices = sort(unique(data_for_app$state)), selected = "NSW"
+    ),
+    selectInput(
+      "metric_filter", "Risk type:",
+      choices = sort(unique(data_for_app$metric)), selected = "total"
+    ),
+    dateRangeInput(
+      "date_range", "Date range:",
+      start = min(data_for_app$report_date),
+      end   = max(data_for_app$report_date),
+      min   = min(data_for_app$report_date),
+      max   = max(data_for_app$report_date)
+    ),
+    div(class = "mt-3",
+        downloadButton("download_csv", "Download filtered CSV", class = "btn-primary"))
+  ),
+
+  # KPIs
+  layout_columns(
+    col_widths = c(4,4,4),
+    value_box(title = "Avg risk",    value = textOutput("kpi_avg"),  showcase = NULL, theme_color = "primary"),
+    value_box(title = "Peak risk",   value = textOutput("kpi_peak"), showcase = NULL, theme_color = "warning"),
+    value_box(title = "Data points", value = textOutput("kpi_n"),    showcase = NULL, theme_color = "success")
+  ),
+
+  # Plot + summary
+  layout_columns(
+    col_widths = c(8,4),
+    card(
+      full_screen = TRUE,
+      card_header("Risk Over Time (Interactive)"),
+      uiOutput("no_data_msg_top"),
+      plotlyOutput("risk_plotly", height = "420px")
+    ),
+    card(
+      card_header("Narrative Summary"),
+      verbatimTextOutput("summary_text"),
+      div(class = "text-muted small mt-2",
+          "Interpretation: spikes suggest periods of higher leakage likelihood; sustained lows suggest stronger control.")
+    )
+  ),
+
+  # Table
+  card(
+    card_header("Filtered Daily Values"),
+    DTOutput("risk_table")
+  ),
+
+  # Footer
+  div(class = "mt-4 text-muted small",
+      tags$hr(),
+      tags$b("Data Source: "),
+      "Lydeamore et al. (2023), Science Advances 9(3): abm3624. ",
+      "Provided via Monash ETC5523 teaching materials.")
+)
+
+# Server
 server <- function(input, output, session) {
 
-  # Dynamically restrict metric choices based on state
+  # Keep metric choices valid for the chosen state (avoid empty plots)
   observeEvent(input$state_filter, {
     valid_metrics <- data_for_app |>
-      filter(state == input$state_filter) |>
-      filter(!is.na(value)) |>
+      filter(state == input$state_filter, !is.na(value)) |>
       distinct(metric) |>
       arrange(metric) |>
       pull(metric)
 
-    # update the metric dropdown so we don't allow useless choices (e.g. AUS + breach if NA)
     updateSelectInput(
-      session,
-      "metric_filter",
-      choices = valid_metrics,
+      session, "metric_filter",
+      choices  = valid_metrics,
       selected = if (input$metric_filter %in% valid_metrics) input$metric_filter else valid_metrics[1]
     )
   }, ignoreInit = FALSE)
 
-  # Filter data reactively based on current inputs
+  # Reactives
   filtered_data <- reactive({
     data_for_app |>
       filter(
@@ -132,105 +121,103 @@ server <- function(input, output, session) {
       )
   })
 
-  # Helper: does user have any non-missing data?
   filtered_non_missing <- reactive({
-    filtered_data() |>
-      filter(!is.na(value))
+    filtered_data() |> filter(!is.na(value))
   })
 
-  # Risk trend plot
-  output$risk_plot <- plotly::renderPlotly({
-    df <- filtered_non_missing()
-    req(nrow(df) > 0)
+  # KPIs
+  output$kpi_avg  <- renderText({ df <- filtered_non_missing(); if (!nrow(df)) "—" else round(mean(df$value), 2) })
+  output$kpi_peak <- renderText({ df <- filtered_non_missing(); if (!nrow(df)) "—" else round(max(df$value), 2) })
+  output$kpi_n    <- renderText({ df <- filtered_non_missing(); if (!nrow(df)) "0" else format(nrow(df), big.mark = ",") })
 
-    p <- ggplot(df, aes(x = report_date, y = value)) +
-      geom_line(linewidth = 1.2) +
-      geom_point(size = 2, alpha = 0.8) +
-      labs(
-        x = "Date",
-        y = "Risk level (modelled)",
-        title = paste(
-          input$state_filter,
-          "-", input$metric_filter,
-          "risk over time"
-        )
-      ) +
-      theme_minimal(base_size = 13)
+  # Plot
+  output$risk_plotly <- renderPlotly({
+    style <- input$chart_style
+    state <- input$state_filter
 
-    plotly::ggplotly(p, tooltip = c("x", "y"))
-  })
-  # Message under the plot if there's no actual data to show
-  output$no_data_msg <- renderUI({
-    if (nrow(filtered_non_missing()) == 0) {
-      div(
-        style = "color:#a00; font-weight:500; margin-top:0.5rem;",
-        "No non-missing data available for this combination of state, risk type, and dates."
-      )
+    df_all <- filtered_data()
+    df     <- filtered_non_missing()
+    req(nrow(df_all) > 0)
+
+    if (style == "compare_bars") {
+      # Build weekly averages for total vs breach for the selected state
+      df_cmp <- data_for_app |>
+        filter(
+          state == state,
+          report_date >= input$date_range[1],
+          report_date <= input$date_range[2],
+          metric %in% c("total", "breach")
+        ) |>
+        mutate(week = floor_date(report_date, "week")) |>
+        group_by(metric, week) |>
+        summarise(value = mean(value, na.rm = TRUE), .groups = "drop") |>
+        filter(is.finite(value))
+
+      validate(need(nrow(df_cmp) > 0, "No data available to compare for this selection."))
+
+      p <- ggplot(df_cmp, aes(week, value, fill = metric)) +
+        geom_col(position = position_dodge(width = 6), width = 6) +
+        scale_fill_manual(values = c(total = "#4C6EF5", breach = "#1E7A46")) +
+        labs(x = "Week", y = "Avg risk (weekly mean)", title = paste(state, "- weekly comparison: total vs breach")) +
+        theme_minimal(base_size = 13) +
+        theme(legend.position = "top")
+
     } else {
-      NULL
+      # Simple line for the chosen metric
+      validate(need(nrow(df) > 0, "No non-missing data for this selection."))
+      p <- ggplot(df, aes(report_date, value)) +
+        geom_line(linewidth = 1.1, color = "#4C6EF5") +
+        labs(x = "Date", y = "Risk level (modelled)", title = paste(state, "-", input$metric_filter, "risk over time")) +
+        theme_minimal(base_size = 13)
     }
+
+    ggplotly(p, dynamicTicks = TRUE) |>
+      layout(hovermode = "x unified",
+             margin = list(l = 50, r = 30, t = 60, b = 50))
   })
 
-  # Data table
-  output$risk_table <- renderDT({
-    df <- filtered_data() |>
-      arrange(desc(report_date))
+  # No-data message
+  output$no_data_msg_top <- renderUI({
+    if (nrow(filtered_non_missing()) == 0) {
+      div(style = "color:#a00; font-weight:600; margin:.25rem 0;",
+          "No non-missing data for this selection.")
+    } else NULL
+  })
 
-    datatable(
-      df,
-      rownames = FALSE,
-      options = list(pageLength = 10)
-    )
+  # Table
+  output$risk_table <- renderDT({
+    filtered_data() |>
+      arrange(desc(report_date)) |>
+      datatable(rownames = FALSE, options = list(pageLength = 10, order = list(list(0, "desc"))))
   })
 
   # Narrative summary
   output$summary_text <- renderText({
     df_all <- filtered_data()
-    df_clean <- filtered_non_missing()
+    df     <- filtered_non_missing()
+    if (!nrow(df_all)) return("No records in this date range.")
 
-    if (nrow(df_all) == 0) {
-      return("No records in this date range.")
-    }
-
-    # average on non-missing values
-    avg_val <- if (nrow(df_clean) > 0) round(mean(df_clean$value), 2) else NA
-
-    if (nrow(df_clean) > 0) {
-      peak_row <- df_clean |>
-        slice_max(order_by = value, n = 1)
-      peak_msg <- paste0(
-        "The highest recorded value was ",
-        round(peak_row$value, 2),
-        " on ",
-        format(peak_row$report_date, "%Y-%m-%d"),
-        "."
-      )
-    } else {
-      peak_msg <- "All values in this selection are missing, so no peak can be identified."
-    }
+    avg_val <- if (nrow(df)) round(mean(df$value), 2) else NA
+    peak_msg <- if (nrow(df)) {
+      peak_row <- df |> slice_max(order_by = value, n = 1)
+      paste0("Peak = ", round(peak_row$value, 2), " on ", format(peak_row$report_date, "%Y-%m-%d"), ".")
+    } else "All values are missing; no peak can be identified."
 
     paste0(
-      "You are looking at ", input$state_filter,
-      ", focusing on '", input$metric_filter, "' risk.\n\n",
-      "Date range: ",
-      format(input$date_range[1], "%Y-%m-%d"),
-      " to ",
-      format(input$date_range[2], "%Y-%m-%d"),
-      ".\n",
-
-      if (!is.na(avg_val)) {
-        paste0("- The average estimated risk was ", avg_val, ".\n")
-      } else {
-        "- The average estimated risk cannot be computed (all values are missing).\n"
-      },
-
-      "- ", peak_msg, "\n\n",
-      "Interpretation:\n",
-      "Higher spikes indicate days where quarantine systems were more stressed ",
-      "or more likely to leak infection into the community. Consistently low values ",
-      "suggest periods of strong control."
+      "Selection: ", input$state_filter, " / '", input$metric_filter, "'.\n",
+      "Date range: ", format(input$date_range[1], "%Y-%m-%d"), " to ", format(input$date_range[2], "%Y-%m-%d"), ".\n",
+      if (!is.na(avg_val)) paste0("Average estimated risk = ", avg_val, ".\n") else "Average risk not available.\n",
+      peak_msg, "\n\n",
+      "Interpretation: spikes suggest higher leakage likelihood; sustained low values suggest stronger control.\n"
     )
   })
+
+  # Download
+  output$download_csv <- downloadHandler(
+    filename = function() paste0("covid_risk_", input$state_filter, "_", input$metric_filter, ".csv"),
+    content  = function(file) write.csv(filtered_data(), file, row.names = FALSE)
+  )
 }
 
+# Run
 shinyApp(ui, server)
