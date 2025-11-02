@@ -22,9 +22,12 @@ It includes:
 
 # Install and load
 ```
-```{r} 
-devtools::install()
+```{r}
+
+# install.packages("remotes")
+remotes::install_github("etc5523-2025/assignment-4-packages-and-shiny-apps-kkapoormails")
 library(CovidRiskExplorer)
+run_app()
 ```
 
 # Access the data

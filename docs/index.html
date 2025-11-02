@@ -93,8 +93,11 @@ It includes: - A cleaned dataset <code>covid_breach_data</code> from <em>Lydeamo
 <h1 id="install-and-load">Install and load<a class="anchor" aria-label="anchor" href="#install-and-load"></a>
 </h1>
 <pre><code>```{r}
-devtools::install()
-library(CovidRiskExplorer)</code></pre>
+
+# install.packages("remotes")
+remotes::install_github("etc5523-2025/assignment-4-packages-and-shiny-apps-kkapoormails")
+library(CovidRiskExplorer)
+run_app()</code></pre>
 </div>
 <div class="section level1">
 <h1 id="access-the-data">Access the data<a class="anchor" aria-label="anchor" href="#access-the-data"></a>
