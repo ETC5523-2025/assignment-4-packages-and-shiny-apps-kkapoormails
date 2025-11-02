@@ -1,4 +1,5 @@
 # inst/app/app.R
+# Quarantine Breach Risk Explorer — Final Clean Version
 
 library(shiny)
 library(dplyr)
@@ -9,10 +10,14 @@ library(bslib)
 library(lubridate)
 library(CovidRiskExplorer)
 
+# -
 # Data
+# -
 data_for_app <- CovidRiskExplorer::get_covid_data()
 
+# -
 # Theme
+# -
 app_theme <- bs_theme(
   version = 5,
   base_font    = font_google("Inter"),
@@ -20,55 +25,98 @@ app_theme <- bs_theme(
   primary = "#4C6EF5",
   success = "#1E7A46",
   warning = "#F4A259",
-  bg = "#F8FAFC", fg = "#0F172A",
-  "card-bg"  = "#FFFFFF", "input-bg" = "#FFFFFF", "navbar-bg" = "#FFFFFF"
+  bg = "#F8FAFC",
+  fg = "#0F172A",
+  "card-bg"  = "#FFFFFF",
+  "input-bg" = "#FFFFFF",
+  "navbar-bg" = "#FFFFFF"
 )
 
+#  UI
 ui <- page_sidebar(
   title    = "Quarantine Breach Risk Explorer",
   theme    = app_theme,
   fillable = TRUE,
 
-  # --- global CSS ---
+  #  Load external CSS file FIRST (inst/app/www/style.css)
+  tags$head(
+    includeCSS(system.file("app/www/style.css", package = "CovidRiskExplorer"))
+  ),
+
+  # Inline KPI styles to ensure they always take precedence
   tags$style(HTML("
-    .card-body { overflow: visible !important; }
-    pre, .shiny-text-output { white-space: pre-wrap; overflow: visible !important; }
-    .kpi-row {
-      display: flex; justify-content: center; align-items: stretch; gap: 2em; margin: .5rem 0 1.25rem 0;
-      flex-wrap: nowrap;
-    }
-    .kpi-card {
-      min-height: 130px; max-width: 360px; width: 100%;
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      border-radius: 16px; border: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,.06);
-      padding: 15px 18px 12px 18px;
-      background: #FFF;
-    }
-    .kpi-title { font-weight: 600; font-size: 1.1rem; color: #0F172A; margin-bottom: 4px; text-align: center; }
-    .kpi-num   { font-size: 1.85rem; font-weight: 700; color: #0F172A; text-align: center; line-height: 1.2; }
-    .kpi-bg-avg  { background: #E9EDFC; }
-    .kpi-bg-peak { background: #FEF3E2; }
-    .kpi-bg-n    { background: #E9F7EF; }
-    .card { margin-bottom: 2rem; }
+  .kpi-row {
+    display: flex; justify-content: center; align-items: stretch; gap: 2em;
+    margin: .5rem 0 1.25rem 0; flex-wrap: nowrap;
+  }
+  .kpi-card {
+    min-height: 130px; max-width: 360px; width: 100%;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    border-radius: 16px; border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    padding: 20px 18px 18px 18px;
+    background: #FFF !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,.12);
+  }
+  .kpi-title {
+    font-weight: 600;
+    font-size: 1.35rem;
+    color: #0F172A;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+.kpi-num {
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: #0F172A;
+    text-align: center;
+    line-height: 1.05;
+    letter-spacing: -0.5px;
+}
+  .kpi-bg-avg  { background: #E9EDFC !important; }
+  .kpi-bg-peak { background: #FEF3E2 !important; }
+  .kpi-bg-n    { background: #E9F7EF !important; }
+")),
 
-    /* widen the date range inputs a bit */
-    .date-range-input input { width: 125px !important; }
-  ")),
-
-  # --- replace default sidebar arrow with a hamburger icon ---
+  tags$style(HTML("
+  pre, .shiny-text-output {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+")),
+  # Replace sidebar arrow with persistent hamburger icon
   tags$script(HTML("
-    document.addEventListener('DOMContentLoaded', function() {
-      const btn = document.querySelector('.bslib-page-sidebar-toggle');
-      if (btn) {
-        btn.innerHTML = '&#9776;';        // ☰
+    (function() {
+      function setHamburger(btn) {
+        if (!btn) return;
+        if (btn.dataset.hamburgerified === '1') return;
+        btn.innerHTML = '&#9776;';
         btn.style.fontSize = '20px';
         btn.title = 'Toggle sidebar';
+        btn.dataset.hamburgerified = '1';
       }
-    });
+
+      function findAndSet() {
+        const btn = document.querySelector('.bslib-page-sidebar-toggle');
+        setHamburger(btn);
+      }
+
+      document.addEventListener('DOMContentLoaded', findAndSet);
+      const obs = new MutationObserver(findAndSet);
+      obs.observe(document.documentElement, { childList: true, subtree: true });
+    })();
   ")),
 
-  # --- sidebar controls ---
+  # Sidebar controls
+
   sidebar = sidebar(
     radioButtons(
       "chart_style", "Chart style:",
@@ -91,7 +139,8 @@ ui <- page_sidebar(
         downloadButton("download_csv", "Download filtered CSV", class = "btn-primary"))
   ),
 
-  # KPI tiles (visible on all tabs)
+  # KPI Row (always visible)
+
   div(class = "kpi-row",
       div(class = "kpi-card kpi-bg-avg",
           div(class = "kpi-title", "Average Risk"),
@@ -107,15 +156,19 @@ ui <- page_sidebar(
       )
   ),
 
-  # ---- MAIN NAV TABS ----
-  navs_tab_card(
+
+  # Main Navigation Tabs
+
+  navset_card_tab(
+
+    # - Tab 1: Plots -
     nav_panel(
       "Plots",
       layout_columns(
         col_widths = c(8, 4),
         card(
           card_header("Risk Over Time (Interactive)"),
-          plotlyOutput("risk_plotly", height = "430px")
+          plotlyOutput("risk_plotly", height = "460px")
         ),
         card(
           card_header("Narrative Summary"),
@@ -126,13 +179,17 @@ ui <- page_sidebar(
         )
       )
     ),
+
+    # - Tab 2: Data Table -
     nav_panel(
-      "Data table",
+      "Data Table",
       card(
         card_header("Filtered Daily Values"),
         DTOutput("risk_table")
       )
     ),
+
+    # - Tab 3: Guide & Notes -
     nav_panel(
       "Guide & Notes",
       card(
@@ -173,9 +230,12 @@ ui <- page_sidebar(
   )
 )
 
+# -
+# Server
+# -
 server <- function(input, output, session) {
 
-  # Keep metric choices valid for selected state
+  #  Keep metric options valid per selected state
   observeEvent(input$state_filter, {
     valid_metrics <- data_for_app |>
       filter(state == input$state_filter, !is.na(value)) |>
@@ -190,7 +250,7 @@ server <- function(input, output, session) {
     )
   }, ignoreInit = FALSE)
 
-  # Reactives
+  #  Reactives
   filtered_data <- reactive({
     data_for_app |>
       filter(
@@ -205,12 +265,12 @@ server <- function(input, output, session) {
     filtered_data() |> filter(!is.na(value))
   })
 
-  # KPIs
+  #  KPI outputs
   output$kpi_avg  <- renderText({ df <- filtered_non_missing(); if (!nrow(df)) "—" else round(mean(df$value), 2) })
   output$kpi_peak <- renderText({ df <- filtered_non_missing(); if (!nrow(df)) "—" else round(max(df$value), 2) })
   output$kpi_n    <- renderText({ df <- filtered_non_missing(); if (!nrow(df)) "0" else format(nrow(df), big.mark = ",") })
 
-  # Plot
+  #  Plot
   output$risk_plotly <- renderPlotly({
     style <- input$chart_style
     state <- input$state_filter
@@ -237,7 +297,8 @@ server <- function(input, output, session) {
       p <- ggplot(df_cmp, aes(week, value, fill = metric)) +
         geom_col(position = position_dodge(width = 6), width = 6) +
         scale_fill_manual(values = c(total = "#4C6EF5", breach = "#1E7A46")) +
-        labs(x = "Week", y = "Avg risk (weekly mean)", title = paste(state, "- weekly comparison: total vs breach")) +
+        labs(x = "Week", y = "Avg risk (weekly mean)",
+             title = paste(state, "- weekly comparison: total vs breach")) +
         theme_minimal(base_size = 14) +
         theme(legend.position = "top")
 
@@ -245,7 +306,8 @@ server <- function(input, output, session) {
       validate(need(nrow(df) > 0, "No non-missing data for this selection."))
       p <- ggplot(df, aes(report_date, value)) +
         geom_line(linewidth = 1.3, color = "#4C6EF5") +
-        labs(x = "Date", y = "Risk level (modelled)", title = paste(state, "-", input$metric_filter, "risk over time")) +
+        labs(x = "Date", y = "Risk level (modelled)",
+             title = paste(state, "-", input$metric_filter, "risk over time")) +
         theme_minimal(base_size = 14)
     }
 
@@ -253,23 +315,25 @@ server <- function(input, output, session) {
       layout(hovermode = "x unified", margin = list(l = 60, r = 40, t = 70, b = 60))
   })
 
-  # Table
+  # Data Table
   output$risk_table <- renderDT({
     filtered_data() |>
       arrange(desc(report_date)) |>
       datatable(rownames = FALSE, options = list(pageLength = 25))
   })
 
-  # Narrative summary
+  # Narrative Summary
   output$summary_text <- renderText({
     df_all <- filtered_data()
     df     <- filtered_non_missing()
     if (!nrow(df_all)) return("No records in this date range.")
+
     avg_val <- if (nrow(df)) round(mean(df$value), 2) else NA
     peak_msg <- if (nrow(df)) {
       peak_row <- df |> slice_max(order_by = value, n = 1)
       paste0("Peak = ", round(peak_row$value, 2), " on ", format(peak_row$report_date, "%Y-%m-%d"), ".")
     } else "All values are missing; no peak can be identified."
+
     paste0(
       "Selection: ", input$state_filter, " / '", input$metric_filter, "'.\n",
       "Date range: ", format(input$date_range[1], "%Y-%m-%d"), " to ", format(input$date_range[2], "%Y-%m-%d"), ".\n",
@@ -279,11 +343,13 @@ server <- function(input, output, session) {
     )
   })
 
-  # Download
+  # CSV Download
   output$download_csv <- downloadHandler(
     filename = function() paste0("covid_risk_", input$state_filter, "_", input$metric_filter, ".csv"),
     content  = function(file) write.csv(filtered_data(), file, row.names = FALSE)
   )
 }
+
+# Run App
 
 shinyApp(ui, server)

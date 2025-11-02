@@ -1,33 +1,43 @@
-#' Launch the Quarantine Breach Risk Dashboard
+#' Launch the Quarantine Breach Risk Explorer
 #'
-#' This function starts the interactive Shiny app bundled with the
-#' \code{CovidRiskExplorer} package.
-#'
-#' The dashboard allows you to:
+#' This function starts the interactive Shiny dashboard included with the
+#' \pkg{CovidRiskExplorer} package. The dashboard allows users to:
 #' \itemize{
-#'   \item select an Australian state/territory,
-#'   \item choose a risk type (overall quarantine risk vs breach-related risk),
-#'   \item choose a date range,
-#'   \item view how daily estimated risk changes over time,
-#'   \item inspect a table of daily values,
-#'   \item read an automatically generated plain-English summary that explains when risk was highest.
+#'   \item select an Australian state or territory,
+#'   \item choose a risk type (overall quarantine risk vs. breach-related risk),
+#'   \item adjust a date range to focus on specific time periods,
+#'   \item explore interactive plots of daily modelled risk over time,
+#'   \item inspect tabular daily values, and
+#'   \item read automatically generated narrative summaries describing
+#'         risk peaks and average levels.
 #' }
 #'
-#' The data used in the app is \code{covid_breach_data}, which is derived
-#' from modelling of quarantine outbreak/breach risk during the Delta period
-#' (Lydeamore et al., 2023, Science Advances) and provided in ETC5523.
+#' The data visualised in the app is sourced from the \code{covid_breach_data}
+#' dataset, derived from Lydeamore et al. (2023), *Science Advances 9(3): abm3624*,
+#' supplied in the ETC5523 unit at Monash University.
 #'
-#' @return This function does not return a value; it launches the Shiny app.
-
+#' @return Invisibly returns the Shiny app object.
+#'
 #' @examples
 #' \dontrun{
 #'   run_app()
 #' }
 #'
-#' @importFrom shiny runApp
-#' @importFrom plotly ggplotly renderPlotly
+#' @import shiny
 #' @export
 run_app <- function() {
+  # Locate the app directory within the installed package
   app_dir <- system.file("app", package = "CovidRiskExplorer")
-  shiny::runApp(app_dir, display.mode = "normal")
+
+  # Guard clause — ensure the app directory exists
+  if (app_dir == "" || !dir.exists(app_dir)) {
+    stop(
+      "Could not find the Shiny app directory inside the package.\n",
+      "Expected path: inst/app/",
+      call. = FALSE
+    )
+  }
+
+  # Launch the Shiny application
+  shiny::shinyAppDir(appDir = app_dir)
 }

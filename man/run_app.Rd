@@ -2,31 +2,30 @@
 % Please edit documentation in R/run_app.R
 \name{run_app}
 \alias{run_app}
-\title{Launch the Quarantine Breach Risk Dashboard}
+\title{Launch the Quarantine Breach Risk Explorer}
 \usage{
 run_app()
 }
 \value{
-This function does not return a value; it launches the Shiny app.
+Invisibly returns the Shiny app object.
 }
 \description{
-This function starts the interactive Shiny app bundled with the
-\code{CovidRiskExplorer} package.
+This function starts the interactive Shiny dashboard included with the
+\pkg{CovidRiskExplorer} package. The dashboard allows users to:
+\itemize{
+\item select an Australian state or territory,
+\item choose a risk type (overall quarantine risk vs. breach-related risk),
+\item adjust a date range to focus on specific time periods,
+\item explore interactive plots of daily modelled risk over time,
+\item inspect tabular daily values, and
+\item read automatically generated narrative summaries describing
+risk peaks and average levels.
+}
 }
 \details{
-The dashboard allows you to:
-\itemize{
-\item select an Australian state/territory,
-\item choose a risk type (overall quarantine risk vs breach-related risk),
-\item choose a date range,
-\item view how daily estimated risk changes over time,
-\item inspect a table of daily values,
-\item read an automatically generated plain-English summary that explains when risk was highest.
-}
-
-The data used in the app is \code{covid_breach_data}, which is derived
-from modelling of quarantine outbreak/breach risk during the Delta period
-(Lydeamore et al., 2023, Science Advances) and provided in ETC5523.
+The data visualised in the app is sourced from the \code{covid_breach_data}
+dataset, derived from Lydeamore et al. (2023), \emph{Science Advances 9(3): abm3624},
+supplied in the ETC5523 unit at Monash University.
 }
 \examples{
 \dontrun{
