@@ -31,6 +31,9 @@
   # bslib (theming for Shiny)
   bslib::bs_theme
 
+  # zoo (for rolling averages in the app)
+  zoo::rollapply
+
   invisible(NULL)
 }
 # nocov end
